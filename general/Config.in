@@ -30,4 +30,9 @@ config BR2_OPENIPC_MAJESTIC
 	string "OpenIPC Majestic"
 	default "lite"
 
+  config BR2_PACKAGE_OPENIPC_AP_AUTO
+      bool "openipc-ap-auto"
+      help
+        Auto-start AP for SSV6155P WiFi
+
 source "$BR2_EXTERNAL_GENERAL_PATH/package/Config.in"
