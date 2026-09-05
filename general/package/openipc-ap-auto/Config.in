@@ -1,0 +1,4 @@
+  config BR2_PACKAGE_OPENIPC_AP_AUTO
+      bool "openipc-ap-auto"
+      help
+        Auto-start AP for SSV6155P WiFi
