@@ -1,0 +1,15 @@
+config BR2_PACKAGE_OPENIPC_AP_AUTO
+	bool "OpenIPC AP Auto Start"
+	depends on BR2_PACKAGE_SSV615X_OPENIPC
+	depends on BR2_PACKAGE_HOSTAPD
+	depends on BR2_PACKAGE_DNSMASQ
+	help
+	  Automatically start AP mode on boot for SSV6155P WiFi
+	  
+	  This package installs an init script that loads the SSV6155P
+	  driver (SDIO mode), configures wlan0 as an AP, and starts
+	  hostapd and dnsmasq automatically on boot.
+	  
+	  SSID: OpenIPC-JA35
+	  Password: 12345678
+	  IP: 192.168.10.1
