@@ -9,54 +9,60 @@ DHCP_RANGE="192.168.10.100,192.168.10.200,255.255.255.0"
 
 case "$1" in
     start)
-        # 加载 SDIO 驱动 (JA-H35 使用 SDIO 接口)
-        modprobe sdhci 2>/dev/null || true
-        modprobe mmc_core 2>/dev/null || true
+        # Load SDIO/MMC host driver - Ingenic T31 uses jzmmc_v12
+        modprobe jzmmc_v12 2>/dev/null || modprobe mmc_core 2>/dev/null || true
         modprobe mmc_block 2>/dev/null || true
         sleep 1
-        
-        # 加载 SSV6155P 驱动
+
+        # Load SSV6155P WiFi driver
         modprobe ssv6x5x 2>/dev/null || insmod /lib/modules/$(uname -r)/kernel/drivers/net/wireless/ssv/ssv6x5x.ko 2>/dev/null || true
         sleep 2
-        
-        # 检查接口是否可用
+
+        # Wait for interface to appear
+        for i in 1 2 3 4 5; do
+            if ip link show $INTERFACE > /dev/null 2>&1; then
+                break
+            fi
+            sleep 1
+        done
+
         if ! ip link show $INTERFACE > /dev/null 2>&1; then
-            echo "ERROR: $INTERFACE not found"
+            echo "ERROR: $INTERFACE not found (SSV6155P failed to initialize)"
             exit 1
         fi
-        
-        # 配置接口 IP
+
+        # Configure interface IP
         ifconfig $INTERFACE $IP_ADDR netmask $NETMASK up 2>/dev/null || \
         ip addr add $IP_ADDR/24 dev $INTERFACE 2>/dev/null || true
         ip link set $INTERFACE up 2>/dev/null || true
         sleep 1
-        
-        # 启动 DHCP 服务器
+
+        # Start DHCP server
         killall dnsmasq 2>/dev/null || true
         dnsmasq --interface=$INTERFACE --bind-interfaces --dhcp-range=$DHCP_RANGE --dhcp-leasefile=/tmp/dnsmasq.leases --no-dhcp-script 2>/dev/null || true
         sleep 1
-        
-        # 启动 AP
+
+        # Start AP
         killall hostapd 2>/dev/null || true
         hostapd -B /etc/hostapd.conf 2>/dev/null || true
         sleep 1
-        
+
         echo "AP started: SSID=$SSID, IP=$IP_ADDR"
         ;;
-        
+
     stop)
         killall hostapd 2>/dev/null || true
         killall dnsmasq 2>/dev/null || true
         ifconfig $INTERFACE down 2>/dev/null || true
         rmmod ssv6x5x 2>/dev/null || true
         ;;
-        
+
     restart)
         $0 stop
         sleep 1
         $0 start
         ;;
-        
+
     *)
         echo "Usage: $0 {start|stop|restart}"
         exit 1
